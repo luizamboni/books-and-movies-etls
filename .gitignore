@@ -1,0 +1,5 @@
+.venv
+.mypy_cache
+data/raw
+data/replication
+.DS_Store
