@@ -1,4 +1,4 @@
-WITH books_and_movies AS (
+WITH movies_based_on_books AS (
     SELECT 
         IF(b.name is NULL, false, true) AS based_on_movie
     FROM 
@@ -8,12 +8,12 @@ WITH books_and_movies AS (
 ),
 
 
-quantity_of_books_based_on_movies AS (
+quantity_of_movies_based_on_books AS (
     SELECT 
         based_on_movie,
         count(1) quantity
     FROM 
-        books_and_movies 
+        movies_based_on_books 
     GROUP BY 
         based_on_movie
 ),
@@ -22,14 +22,14 @@ total_of_books AS (
     SELECT 
         sum(quantity) total
     FROM 
-        quantity_of_books_based_on_movies
+        quantity_of_movies_based_on_books
 )
 
 SELECT
     q.based_on_movie based_on_movie,
     round(q.quantity / t.total * 100, 2) percentage
 FROM 
-    quantity_of_books_based_on_movies q
+    quantity_of_movies_based_on_books q
 JOIN 
     total_of_books t ON 1=1
 
