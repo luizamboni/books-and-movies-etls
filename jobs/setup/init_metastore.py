@@ -9,4 +9,5 @@ spark = SparkSession \
 
 spark.sql("create database if not exists vendor")
 spark.sql("create database if not exists stream")
+spark.sql("create database if not exists analytics")
 spark.sql("show databases").show()
