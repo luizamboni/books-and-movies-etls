@@ -98,6 +98,19 @@ questions:
 		--query-path $(shell pwd)/jobs/analytics-engineer/3-movies-based-on-singapurians-books-in-last-month.sql \
 		--destin-path $(shell pwd)/data/gold/movies_based_on_singapurians_books_in_last_month/
 
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/analytics-engineer/questions.py \
+		--table-name 'analytics.average_streamin_duration' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/4-average-streaming-duration.sql \
+		--destin-path $(shell pwd)/data/gold/average_streamin_duration/
+
+
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/analytics-engineer/questions.py \
+		--table-name 'analytics.median_streaming_size' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/5-median-streaming-size.sql \
+		--destin-path $(shell pwd)/data/gold/median_streaming_size/
+
 
 run_all: clear init_metastore incoming_data replication updates questions
 
