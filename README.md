@@ -59,6 +59,27 @@ The `questions.py` spark job was created for that.
 CTE syntax was used in queries to make the them clearer.
 
 
+# Phase 3
+For production this pipeline should have some small changes, and sometimes it depepends on what Cloud 
+the clients will choose or even if they prefer on-premisses servers.
+One of the main changes is use a Cloud metastorage as AWS Glue or Databricks Unity catalog.
 
+My idea is to implement a mix of Databricks and AWS.
 
+The base technologies remains the same. Python, Pyspark and DeltaTable.
 
+Firstly, Terraform with Gitlab CI ou other CI based on git repo for Continuous Integration.
+
+Databricks Sql Endpoint could be used to integrate the data with some dataviz tool like Metabase or Superset. 
+It is just turn on, no big deal.
+
+As storage layer, I recomend S3, due the big number of tools with integration as its many options of
+applicable policies, like retention period, moving policies, access and its low price.
+
+The tables write and merge jobs could be done at regular intervals - hourly, I guess - for the tables based in our applications and once a day for tables based on external data that comes also once a day. 
+In Databricks it can be scheduled easily even with dependent jobs.
+
+Despite de amount of data that comes every day (8GB) be apparently a huge ammount - specially when we multiply it
+for 365 days, which would give us 2.92TB - we are always working with diferencials. Then it turns in a small data.
+
+A policy for discarding old data can be implemented, using a backup of the tables' last state. The raw downloaded data have its utility at maximum, in 30-90 days roughly, when it is useful to have this data to check some inconsistencies and drilldown sobre incidents. 
