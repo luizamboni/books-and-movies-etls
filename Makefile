@@ -4,12 +4,13 @@ clear:
 	rm -rf ./data/raw/*
 	rm -rf ./data/replication/*
 	rm -rf ./data/silver/*
+	rm -rf ./data/gold/*
 	rm -rf ./data/metastore/*
 
 init_metastore:
 	spark-submit \
 		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
-		jobs/engineer/setup/init_metastore.py
+		jobs/setup/init_metastore.py
 
 incoming_data:
 	python jobs/engineer/ftp/downloader.py \
@@ -99,8 +100,20 @@ updates:
 		-pk created_at
 
 
+questions:
+	spark-submit \
+		--packages io.delta:delta-spark_2.12:3.0.0 \
+		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+		--conf spark.databricks.delta.schema.autoMerge.enabled=true \
+		jobs/analytics-engineer/questions.py \
+		--table-name 'analytics.movies_based_on_books' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/1-movies-based-on-books.sql \
+		--destin-path $(shell pwd)/data/gold/movies-based-on-books/
 
-run_all: clear init_metastore incoming_data replication updates
+
+run_all: clear init_metastore incoming_data replication updates questions
 
 
 
