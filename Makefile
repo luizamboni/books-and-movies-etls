@@ -1,11 +1,15 @@
 clear:
+	rm -rf metastore_db
+	rm -rf derby.log
 	rm -rf ./data/raw/*
 	rm -rf ./data/replication/*
 	rm -rf ./data/silver/*
 	rm -rf ./data/metastore/*
 
 init_metastore:
-	spark-submit jobs/engineer/setup/init_metastore.py
+	spark-submit \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+		jobs/engineer/setup/init_metastore.py
 
 incoming_data:
 	python jobs/engineer/ftp/downloader.py \
@@ -23,8 +27,9 @@ replication:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
 		jobs/engineer/database_replication/full-load.py \
-		--job-name 'stream.users' \
+		--table-name 'stream.users' \
 		--origin-path $(shell pwd)/assets/data/users.csv \
 		--destin-path $(shell pwd)/data/replication/users/
 
@@ -32,8 +37,9 @@ replication:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
 		jobs/engineer/database_replication/full-load.py \
-		--job-name 'stream.movies' \
+		--table-name 'stream.movies' \
 		--origin-path $(shell pwd)/assets/data/movies.csv \
 		--destin-path $(shell pwd)/data/replication/movies/
 
@@ -42,8 +48,9 @@ replication:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
 		jobs/engineer/database_replication/full-load.py \
-		--job-name 'stream.streams' \
+		--table-name 'stream.streams' \
 		--origin-path $(shell pwd)/assets/data/streams.csv \
 		--destin-path $(shell pwd)/data/replication/streams/
 
@@ -53,8 +60,9 @@ updates:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
 		jobs/analytics-engineer/transform-and-load.py \
-		--job-name authors-transform-and-load \
+		--table-name 'vendor.authors' \
 		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
 		--destin-path $(shell pwd)/data/silver/users/ \
 		-t 'metadata.name AS name' \
@@ -67,9 +75,10 @@ updates:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
 		jobs/analytics-engineer/transform-and-load.py \
-		--job-name books-transform-and-load \
-		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
+		--table-name 'vendor.books' \
+		--origin-path-or-url $(shell pwd)/data/raw/books/current.json \
 		--destin-path $(shell pwd)/data/silver/books/ \
 		-pk name
 
@@ -77,8 +86,9 @@ updates:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
 		jobs/analytics-engineer/transform-and-load.py \
-		--job-name reviews-transform-and-load \
+		--table-name 'vendor.reviews' \
 		--origin-path-or-url $(shell pwd)/data/raw/reviews/current.json \
 		--destin-path $(shell pwd)/data/silver/reviews/ \
 		-t 'content.text AS text' \
@@ -90,7 +100,7 @@ updates:
 
 
 
-run_all: clear incoming_data replication updates
+run_all: clear init_metastore incoming_data replication updates
 
 
 
