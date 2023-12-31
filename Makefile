@@ -122,9 +122,7 @@ questions:
 		--destin-path $(shell pwd)/data/gold/how_many_users_watched_at_least_50_prercent_in_last_week/
 
 
-run_all: clear init_metastore incoming_data replication updates questions
-
-
+pipeline: clear init_metastore incoming_data replication updates questions
 
 pyspark:
 	pyspark $(SPARK_PAREMETERS)
