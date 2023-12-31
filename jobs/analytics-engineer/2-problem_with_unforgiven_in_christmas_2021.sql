@@ -1,5 +1,5 @@
 SELECT 
-    count(1) 
+    count(1) quantity
 FROM 
     stream.streams 
 WHERE 1=1 

@@ -26,7 +26,7 @@ total_of_books AS (
 )
 
 SELECT
-    q.based_on_movie,
+    q.based_on_movie based_on_movie,
     round(q.quantity / t.total * 100, 2) percentage
 FROM 
     quantity_of_books_based_on_movies q
