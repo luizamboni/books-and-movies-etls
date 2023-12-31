@@ -4,6 +4,7 @@ data/raw
 data/replication
 data/silver
 data/metastore
+data/gold
 .DS_Store
 derby.log
 metastore_db
