@@ -2,4 +2,5 @@
 .mypy_cache
 data/raw
 data/replication
+data/silver
 .DS_Store
