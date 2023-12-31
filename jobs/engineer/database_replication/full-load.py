@@ -1,6 +1,9 @@
 from pyspark.sql import SparkSession
 import argparse
 import sys
+from os.path import abspath
+
+warehouse_location = abspath('data/metastore')
 
 def ger_cli_args(args):
     parser = argparse.ArgumentParser()
@@ -21,6 +24,8 @@ if __name__ == "__main__":
         SparkSession
         .Builder()
         .appName(f"{job_name}_replication")
+        .config("spark.sql.warehouse.dir", warehouse_location) \
+        .enableHiveSupport() \
         .getOrCreate()
     )
 
@@ -31,5 +36,5 @@ if __name__ == "__main__":
         .format("delta") \
         .mode('overwrite') \
         .option("overwriteSchema", "true") \
-        .partitionBy([]) \
-        .save(destin_path)
+        .option("location", destin_path) \
+        .saveAsTable(job_name)

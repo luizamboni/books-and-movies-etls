@@ -2,6 +2,10 @@ clear:
 	rm -rf ./data/raw/*
 	rm -rf ./data/replication/*
 	rm -rf ./data/silver/*
+	rm -rf ./data/metastore/*
+
+init_metastore:
+	spark-submit jobs/engineer/setup/init_metastore.py
 
 incoming_data:
 	python jobs/engineer/ftp/downloader.py \
@@ -49,7 +53,7 @@ updates:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		jobs/analytics/transform-and-load.py \
+		jobs/analytics-engineer/transform-and-load.py \
 		--job-name authors-transform-and-load \
 		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
 		--destin-path $(shell pwd)/data/silver/users/ \
@@ -63,7 +67,7 @@ updates:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		jobs/analytics/transform-and-load.py \
+		jobs/analytics-engineer/transform-and-load.py \
 		--job-name books-transform-and-load \
 		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
 		--destin-path $(shell pwd)/data/silver/books/ \
@@ -73,7 +77,7 @@ updates:
 		--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		jobs/analytics/transform-and-load.py \
+		jobs/analytics-engineer/transform-and-load.py \
 		--job-name reviews-transform-and-load \
 		--origin-path-or-url $(shell pwd)/data/raw/reviews/current.json \
 		--destin-path $(shell pwd)/data/silver/reviews/ \
@@ -87,3 +91,12 @@ updates:
 
 
 run_all: clear incoming_data replication updates
+
+
+
+pyspark:
+	pyspark \
+		--packages io.delta:delta-spark_2.12:3.0.0 \
+		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore
