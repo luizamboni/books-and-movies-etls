@@ -61,7 +61,7 @@ updates:
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
-		jobs/analytics-engineer/transform-and-load.py \
+		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.authors' \
 		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
 		--destin-path $(shell pwd)/data/silver/users/ \
@@ -76,7 +76,7 @@ updates:
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
-		jobs/analytics-engineer/transform-and-load.py \
+		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.books' \
 		--origin-path-or-url $(shell pwd)/data/raw/books/current.json \
 		--destin-path $(shell pwd)/data/silver/books/ \
@@ -87,7 +87,7 @@ updates:
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
-		jobs/analytics-engineer/transform-and-load.py \
+		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.reviews' \
 		--origin-path-or-url $(shell pwd)/data/raw/reviews/current.json \
 		--destin-path $(shell pwd)/data/silver/reviews/ \
