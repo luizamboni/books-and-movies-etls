@@ -1,8 +1,11 @@
 SPARK_PAREMETERS=--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension \
+		--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
 		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
-		--conf spark.hadoop.hive.cli.print.header=true # just for spark-sql
+		--conf spark.hadoop.hive.cli.print.header=true \
+		--files ./log4j.properties \
+		--conf spark.driver.extraJavaOptions=-Dlog4j.configuration=log4j.properties
+
 
 clear:
 	rm -rf metastore_db
