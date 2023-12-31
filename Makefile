@@ -86,15 +86,18 @@ questions:
 		--query-path $(shell pwd)/jobs/analytics-engineer/1-movies-based-on-books.sql \
 		--destin-path $(shell pwd)/data/gold/movies-based-on-books/
 
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/analytics-engineer/questions.py \
 		--table-name 'analytics.problem_with_unforgiven_in_christmas_2021' \
 		--query-path $(shell pwd)/jobs/analytics-engineer/2-problem_with_unforgiven_in_christmas_2021.sql \
 		--destin-path $(shell pwd)/data/gold/problem_with_unforgiven_in_christmas_2021/
+	
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/analytics-engineer/questions.py \
+		--table-name 'analytics.movies_based_on_singapurians_books_in_last_month' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/3-movies-based-on-singapurians-books-in-last-month.sql \
+		--destin-path $(shell pwd)/data/gold/movies_based_on_singapurians_books_in_last_month/
+
 
 run_all: clear init_metastore incoming_data replication updates questions
 
