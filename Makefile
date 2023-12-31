@@ -1,7 +1,8 @@
 SPARK_PAREMETERS=--packages io.delta:delta-spark_2.12:3.0.0 \
 		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
 		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+		--conf spark.hadoop.hive.cli.print.header=true # just for spark-sql
 
 clear:
 	rm -rf metastore_db
@@ -111,6 +112,12 @@ questions:
 		--query-path $(shell pwd)/jobs/analytics-engineer/5-median-streaming-size.sql \
 		--destin-path $(shell pwd)/data/gold/median_streaming_size/
 
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/analytics-engineer/questions.py \
+		--table-name 'analytics.how_many_users_watched_at_least_50_prercent_in_last_week' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/6-how-many-users-watched-at-least-50-prercent-in-last-week.sql \
+		--destin-path $(shell pwd)/data/gold/how_many_users_watched_at_least_50_prercent_in_last_week/
+
 
 run_all: clear init_metastore incoming_data replication updates questions
 
@@ -118,3 +125,6 @@ run_all: clear init_metastore incoming_data replication updates questions
 
 pyspark:
 	pyspark $(SPARK_PAREMETERS)
+
+sql:
+	spark-sql $(SPARK_PAREMETERS)
