@@ -1,14 +1,20 @@
 from pyspark.sql import SparkSession, DataFrame
 from delta.tables import DeltaTable
+from typing import List, NamedTuple, cast
 import argparse
 import sys
 
-def ger_cli_args(args):
+class Args(NamedTuple):
+    origin_path: str
+    destin_path: str
+    table_name: str
+
+def ger_cli_args(args: List[str]) -> Args:
     parser = argparse.ArgumentParser()
     parser.add_argument("--origin-path", required=True, type=str)
     parser.add_argument("--destin-path", required=True, type=str)
     parser.add_argument("--table-name", required=True, type=str)
-    return parser.parse_args(args)
+    return cast(Args, parser.parse_args(args))
 
 
 def create_table_from_dataframe(df: DataFrame, table_name: str, location: str):
