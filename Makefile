@@ -1,3 +1,8 @@
+SPARK_PAREMETERS=--packages io.delta:delta-spark_2.12:3.0.0 \
+		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore
+
 clear:
 	rm -rf metastore_db
 	rm -rf derby.log
@@ -8,8 +13,7 @@ clear:
 	rm -rf ./data/metastore/*
 
 init_metastore:
-	spark-submit \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/setup/init_metastore.py
 
 incoming_data:
@@ -24,32 +28,19 @@ incoming_data:
 		--destin-path '$(shell pwd)/data/raw/reviews'
 
 replication:
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/database_replication/full-load.py \
 		--table-name 'stream.users' \
 		--origin-path $(shell pwd)/assets/data/users.csv \
 		--destin-path $(shell pwd)/data/replication/users/
 
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/database_replication/full-load.py \
 		--table-name 'stream.movies' \
 		--origin-path $(shell pwd)/assets/data/movies.csv \
 		--destin-path $(shell pwd)/data/replication/movies/
 
-
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/database_replication/full-load.py \
 		--table-name 'stream.streams' \
 		--origin-path $(shell pwd)/assets/data/streams.csv \
@@ -57,11 +48,7 @@ replication:
 
 
 updates:
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.authors' \
 		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
@@ -72,22 +59,14 @@ updates:
 		-t 'transform(nationalities, x -> x.label) AS nationality_labels' \
 		-pk name
 
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.books' \
 		--origin-path-or-url $(shell pwd)/data/raw/books/current.json \
 		--destin-path $(shell pwd)/data/silver/books/ \
 		-pk name
 
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.reviews' \
 		--origin-path-or-url $(shell pwd)/data/raw/reviews/current.json \
@@ -101,25 +80,25 @@ updates:
 
 
 questions:
-	spark-submit \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
-		--conf spark.databricks.delta.schema.autoMerge.enabled=true \
+	spark-submit $(SPARK_PAREMETERS) \
 		jobs/analytics-engineer/questions.py \
 		--table-name 'analytics.movies_based_on_books' \
 		--query-path $(shell pwd)/jobs/analytics-engineer/1-movies-based-on-books.sql \
 		--destin-path $(shell pwd)/data/gold/movies-based-on-books/
 
+	spark-submit \
+		--packages io.delta:delta-spark_2.12:3.0.0 \
+		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore \
+		jobs/analytics-engineer/questions.py \
+		--table-name 'analytics.problem_with_unforgiven_in_christmas_2021' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/2-problem_with_unforgiven_in_christmas_2021.sql \
+		--destin-path $(shell pwd)/data/gold/problem_with_unforgiven_in_christmas_2021/
 
 run_all: clear init_metastore incoming_data replication updates questions
 
 
 
 pyspark:
-	pyspark \
-		--packages io.delta:delta-spark_2.12:3.0.0 \
-		--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-		--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
-		--conf spark.sql.warehouse.dir=$(shell pwd)/data/metastore
+	pyspark $(SPARK_PAREMETERS)
