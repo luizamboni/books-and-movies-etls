@@ -83,3 +83,6 @@ Despite de amount of data that comes every day (8GB) be apparently a huge ammoun
 for 365 days, which would give us 2.92TB - we are always working with diferencials. Then it turns in a small data.
 
 A policy for discarding old data can be implemented, using a backup of the tables' last state. The raw downloaded data have its utility at maximum, in 30-90 days roughly, when it is useful to have this data to check some inconsistencies and drilldown sobre incidents. 
+
+![Data Pipeline](/architecture.png "Architecture")
+
