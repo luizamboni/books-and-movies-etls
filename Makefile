@@ -83,34 +83,39 @@ silver:
 		-t 'lower(original_language) AS original_language' \
 		-t size_mb
 
-
+# from vendor
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.authors' \
 		--origin-path-or-url $(shell pwd)/data/raw/vendor/authors/current.json \
-		--destin-path $(shell pwd)/data/silver/users/ \
-		-t 'metadata.name AS name' \
+		--destin-path $(shell pwd)/data/silver/vendor/authors/ \
+		-t 'lower(metadata.name) AS name' \
 		-t 'to_timestamp(metadata.birth_date) AS birth_date' \
 		-t 'to_timestamp(metadata.died_at) AS died_at' \
-		-t 'transform(nationalities, x -> x.label) AS nationality_labels' \
+		-t 'transform(nationalities, x -> lower(x.label)) AS nationality_labels' \
 		-pk name
 
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.books' \
 		--origin-path-or-url $(shell pwd)/data/raw/vendor/books/current.json \
-		--destin-path $(shell pwd)/data/silver/books/ \
-		-pk name
+		--destin-path $(shell pwd)/data/silver/vendor/books/ \
+		-pk name \
+		-t 'lower(name) AS name' \
+		-t 'pages' \
+		-t 'lower(author) AS author' \
+		-t 'lower(publisher) AS publisher'
+
 
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.reviews' \
 		--origin-path-or-url $(shell pwd)/data/raw/vendor/reviews/current.json \
-		--destin-path $(shell pwd)/data/silver/reviews/ \
-		-t 'content.text AS text' \
+		--destin-path $(shell pwd)/data/silver/vendor/reviews/ \
+		-t 'lower(content.text) AS text' \
 		-t 'rating.rate AS rate_value' \
-		-t 'transform(books, x -> x.metadata.title) AS book_titles' \
-		-t 'transform(movies, x -> x.title) AS movie_titles' \
+		-t 'transform(books, x -> lower(x.metadata.title)) AS book_titles' \
+		-t 'transform(movies, x -> lower(x.title)) AS movie_titles' \
 		-t 'to_timestamp(created) AS created_at' \
 		-pk created_at
 

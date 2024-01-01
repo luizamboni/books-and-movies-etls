@@ -1,7 +1,7 @@
 WITH duration_of_streams_in_minutes AS (
 
     SELECT 
-        round(CAST(to_timestamp(end_at) - to_timestamp(start_at) AS int) / 60, 2) minutes  
+        round(CAST(end_at - start_at AS int) / 60, 2) minutes  
     FROM 
         stream.streams
 )

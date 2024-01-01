@@ -5,7 +5,7 @@ WITH books_from_singaporeans_authors AS (
     FROM
         vendor.books b
     JOIN
-        vendor.authors a ON lower(b.author) = lower(a.name)
+        vendor.authors a ON b.author = a.name
     WHERE 1=1
         AND array_contains(nationality_labels, 'Singaporeans')
 ),
@@ -28,5 +28,5 @@ SELECT
 FROM
     streamed_movies_on_last_month m 
 JOIN 
-    books_from_singaporeans_authors b ON lower(m.movie_title) = lower(b.book_name)
+    books_from_singaporeans_authors b ON m.movie_title = b.book_name
     

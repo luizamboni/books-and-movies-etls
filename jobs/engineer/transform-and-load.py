@@ -53,7 +53,9 @@ def overwrite_table(df: DataFrame, destin_path: str):
         .save(destin_path)
 
 def create_table_from_dataframe(df: DataFrame, table_name: str, location: str):
+    # just for exam schema
     df.printSchema()
+    
     DeltaTable.createOrReplace(spark) \
         .location(location) \
         .tableName(table_name) \
@@ -92,6 +94,9 @@ if __name__ == "__main__":
     incomming_df = load_data(spark, origin_path_or_url)
 
     transformed_df = transform(incomming_df, transform_expressions)
+
+    # just for exam a sample
+    transformed_df.show(truncate=False)
 
     if overwrite:
         overwrite_table(transformed_df, destin_path)

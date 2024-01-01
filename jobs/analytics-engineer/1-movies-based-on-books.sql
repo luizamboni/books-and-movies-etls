@@ -4,7 +4,7 @@ WITH movies_based_on_books AS (
     FROM 
         stream.movies m 
     LEFT JOIN 
-        vendor.books b ON lower(m.title) = lower(b.name)
+        vendor.books b ON m.title = b.name
 ),
 
 
