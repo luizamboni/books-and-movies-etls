@@ -17,11 +17,13 @@ def ger_cli_args(args: List[str]) -> Args:
     parser.add_argument("--origin-path-or-url", required=True, type=str)
     parser.add_argument("--destin-path", required=True, type=str)
     parser.add_argument("--table-name", required=True, type=str)
-    parser.add_argument("--transform-expressions", "-t", action="append", default=["*"], type=str)
+    parser.add_argument("--transform-expressions", "-t", action="append", default=[], type=str)
     parser.add_argument("--primary-keys", '-pk', action="append", required=True, type=str)
-    parser.add_argument("--overwrite", action="store", default=False, type=bool)
-
-    return cast(Args, parser.parse_args(args))
+    parser.add_argument("--overwrite", action="store_true", default=False)
+    parsed_args = parser.parse_args(args)
+    if not parsed_args.transform_expressions:
+        parsed_args.transform_expressions = ["*"]
+    return cast(Args, parsed_args)
 
 
 def transform(df: DataFrame, transformations: List[str]) -> DataFrame:
@@ -51,11 +53,22 @@ def overwrite_table(df: DataFrame, destin_path: str):
         .save(destin_path)
 
 def create_table_from_dataframe(df: DataFrame, table_name: str, location: str):
+    df.printSchema()
     DeltaTable.createOrReplace(spark) \
         .location(location) \
         .tableName(table_name) \
         .addColumns(df.schema) \
         .execute()
+
+
+def load_data(spark: SparkSession, path: str) -> DataFrame:
+    if path.endswith(".json"):
+        return spark.read.json(path, multiLine=True)
+    elif path.endswith(".csv"):
+        return spark.read.option("header", True).csv(path)
+    else:
+        raise Exception("unknown format")
+
 
 if __name__ == "__main__":
 
@@ -76,7 +89,7 @@ if __name__ == "__main__":
         .getOrCreate()
     )
 
-    incomming_df = spark.read.json(origin_path_or_url, multiLine=True)
+    incomming_df = load_data(spark, origin_path_or_url)
 
     transformed_df = transform(incomming_df, transform_expressions)
 

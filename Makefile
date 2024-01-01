@@ -20,42 +20,74 @@ init_metastore:
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/setup/init_metastore.py
 
-incoming_data:
+raw:
 	python jobs/engineer/ftp/downloader.py \
 		--origin-path-or-url '$(shell pwd)/assets/vendor/authors.json' \
-		--destin-path '$(shell pwd)/data/raw/authors'
+		--destin-path '$(shell pwd)/data/raw/vendor/authors'
+
 	python jobs/engineer/ftp/downloader.py \
 		--origin-path-or-url '$(shell pwd)/assets/vendor/books.json' \
-		--destin-path '$(shell pwd)/data/raw/books'
+		--destin-path '$(shell pwd)/data/raw/vendor/books'
+
 	python jobs/engineer/ftp/downloader.py \
 		--origin-path-or-url '$(shell pwd)/assets/vendor/reviews.json' \
-		--destin-path '$(shell pwd)/data/raw/reviews'
+		--destin-path '$(shell pwd)/data/raw/vendor/reviews'
 
-replication:
-	spark-submit $(SPARK_PAREMETERS) \
-		jobs/engineer/database_replication/full-load.py \
-		--table-name 'stream.users' \
-		--origin-path $(shell pwd)/assets/data/users.csv \
-		--destin-path $(shell pwd)/data/replication/users/
+	python jobs/engineer/ftp/downloader.py \
+		--origin-path-or-url '$(shell pwd)/assets/data/streams.csv' \
+		--destin-path '$(shell pwd)/data/raw/stream/streams'
 
-	spark-submit $(SPARK_PAREMETERS) \
-		jobs/engineer/database_replication/full-load.py \
-		--table-name 'stream.movies' \
-		--origin-path $(shell pwd)/assets/data/movies.csv \
-		--destin-path $(shell pwd)/data/replication/movies/
+	python jobs/engineer/ftp/downloader.py \
+		--origin-path-or-url '$(shell pwd)/assets/data/users.csv' \
+		--destin-path '$(shell pwd)/data/raw/stream/users'
 
+	python jobs/engineer/ftp/downloader.py \
+		--origin-path-or-url '$(shell pwd)/assets/data/movies.csv' \
+		--destin-path '$(shell pwd)/data/raw/stream/movies'
+
+silver:
 	spark-submit $(SPARK_PAREMETERS) \
-		jobs/engineer/database_replication/full-load.py \
+		jobs/engineer/transform-and-load.py \
+		--overwrite \
 		--table-name 'stream.streams' \
-		--origin-path $(shell pwd)/assets/data/streams.csv \
-		--destin-path $(shell pwd)/data/replication/streams/
+		--origin-path-or-url $(shell pwd)/data/raw/stream/streams/current.csv \
+		--destin-path $(shell pwd)/data/silver/stream/streams/ \
+		-pk start_at \
+		-t 'to_timestamp(start_at) AS start_at' \
+		-t 'to_timestamp(end_at) AS end_at' \
+		-t 'lower(movie_title) AS movie_title' \
+		-t 'user_email' \
+		-t 'size_mb'
+
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/engineer/transform-and-load.py \
+		--overwrite \
+		--table-name 'stream.users' \
+		--origin-path-or-url $(shell pwd)/data/raw/stream/users/current.csv \
+		--destin-path $(shell pwd)/data/silver/stream/users/ \
+		-pk first_name \
+		-pk last_name \
+		-t 'lower(first_name) AS first_name' \
+		-t 'lower(last_name) AS last_name' \
+		-t 'email'
+
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/engineer/transform-and-load.py \
+		--overwrite \
+		--table-name 'stream.movies' \
+		--origin-path-or-url $(shell pwd)/data/raw/stream/movies/current.csv \
+		--destin-path $(shell pwd)/data/silver/stream/movies/ \
+		-pk title \
+		-t 'lower(title) AS title' \
+		-t 'duration_mins' \
+		-t 'lower(original_language) AS original_language' \
+		-t size_mb
 
 
-updates:
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.authors' \
-		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
+		--origin-path-or-url $(shell pwd)/data/raw/vendor/authors/current.json \
 		--destin-path $(shell pwd)/data/silver/users/ \
 		-t 'metadata.name AS name' \
 		-t 'to_timestamp(metadata.birth_date) AS birth_date' \
@@ -66,14 +98,14 @@ updates:
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.books' \
-		--origin-path-or-url $(shell pwd)/data/raw/books/current.json \
+		--origin-path-or-url $(shell pwd)/data/raw/vendor/books/current.json \
 		--destin-path $(shell pwd)/data/silver/books/ \
 		-pk name
 
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/engineer/transform-and-load.py \
 		--table-name 'vendor.reviews' \
-		--origin-path-or-url $(shell pwd)/data/raw/reviews/current.json \
+		--origin-path-or-url $(shell pwd)/data/raw/vendor/reviews/current.json \
 		--destin-path $(shell pwd)/data/silver/reviews/ \
 		-t 'content.text AS text' \
 		-t 'rating.rate AS rate_value' \
@@ -83,7 +115,7 @@ updates:
 		-pk created_at
 
 
-questions:
+gold:
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/analytics-engineer/questions.py \
 		--table-name 'analytics.movies_based_on_books' \
@@ -122,10 +154,26 @@ questions:
 		--destin-path $(shell pwd)/data/gold/how_many_users_watched_at_least_50_prercent_in_last_week/
 
 
-pipeline: clear init_metastore incoming_data replication updates questions
+pipeline: clear init_metastore raw silver gold
 
 pyspark:
 	pyspark $(SPARK_PAREMETERS)
 
 sql:
 	spark-sql $(SPARK_PAREMETERS)
+
+
+dev:
+	spark-submit $(SPARK_PAREMETERS) \
+		jobs/engineer/transform-and-load.py \
+		--overwrite \
+		--table-name 'stream.streams_test' \
+		--origin-path-or-url $(shell pwd)/assets/data/streams.csv \
+		--destin-path $(shell pwd)/data/silver/stream/streams_test \
+		-pk start_at \
+		-t 'to_timestamp(start_at) AS start_at' \
+		-t 'to_timestamp(end_at) AS end_at' \
+		-t 'lower(movie_title) AS movie_title' \
+		-t 'user_email' \
+		-t 'size_mb'
+
