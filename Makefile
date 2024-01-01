@@ -58,8 +58,8 @@ updates:
 		--origin-path-or-url $(shell pwd)/data/raw/authors/current.json \
 		--destin-path $(shell pwd)/data/silver/users/ \
 		-t 'metadata.name AS name' \
-		-t 'metadata.birth_date AS birth_date' \
-		-t 'metadata.died_at AS died_at' \
+		-t 'to_timestamp(metadata.birth_date) AS birth_date' \
+		-t 'to_timestamp(metadata.died_at) AS died_at' \
 		-t 'transform(nationalities, x -> x.label) AS nationality_labels' \
 		-pk name
 
