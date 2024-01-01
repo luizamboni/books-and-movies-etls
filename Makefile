@@ -135,9 +135,9 @@ gold:
 	
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/analytics-engineer/questions.py \
-		--table-name 'analytics.movies_based_on_singapurians_books_in_last_month' \
-		--query-path $(shell pwd)/jobs/analytics-engineer/3-movies-based-on-singapurians-books-in-last-month.sql \
-		--destin-path $(shell pwd)/data/gold/movies_based_on_singapurians_books_in_last_month/
+		--table-name 'analytics.movies_based_on_singapurians_books_in_december_2021' \
+		--query-path $(shell pwd)/jobs/analytics-engineer/3-movies-based-on-singapurians-books-in-december-2021.sql \
+		--destin-path $(shell pwd)/data/gold/movies_based_on_singapurians_books_in_december_2021/
 
 	spark-submit $(SPARK_PAREMETERS) \
 		jobs/analytics-engineer/questions.py \
