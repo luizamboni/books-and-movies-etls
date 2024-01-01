@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     df = spark.sql(sql_query)
 
-    df.printSchema()
+    df.show(truncate=False)
 
     df.write \
         .format("delta") \

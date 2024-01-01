@@ -3,7 +3,7 @@ SELECT
 FROM 
     stream.streams 
 WHERE 1=1 
-    AND movie_title = 'Unforgiven'
+    AND movie_title = 'unforgiven'
     AND (
         (
                 start_at >= to_timestamp('2021-12-25T07:00:00') 

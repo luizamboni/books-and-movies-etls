@@ -1,4 +1,11 @@
-WITH users_that_watched_movies_last_week AS (
+WITH last_day_streamed AS (
+    SELECT 
+        max(end_at) last_streamed_day
+    FROM 
+        stream.streams
+),
+
+users_that_watched_movies_last_week AS (
     SELECT 
         s.user_email, 
         s.movie_title,
@@ -8,8 +15,10 @@ WITH users_that_watched_movies_last_week AS (
         stream.streams s
     JOIN 
         stream.movies m ON s.movie_title = m.title
+    JOIN 
+        last_day_streamed ls ON 1=1
     WHERE 1=1
-        AND start_at >= current_date() - INTERVAL 7 days
+        AND start_at >= ls.last_streamed_day - INTERVAL 7 days
 ),
 
 unique_users_that_wathet_at_least_one_movie_more_than_50 AS (
